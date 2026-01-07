@@ -1,24 +1,17 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import os
 
 app = Flask(__name__)
 
-@app.route("/", methods=["GET"])
+@app.route("/")
 def home():
-    return jsonify({
-        "status": "AI Server Running",
-        "message": "Backend is live"
-    })
+    return send_from_directory(".", "index.html")
 
 @app.route("/check", methods=["POST"])
 def check_image():
     if "image" not in request.files:
         return jsonify({"error": "No image uploaded"}), 400
 
-    image = request.files["image"]
-
-    # ⚠️ Demo response (FREE setup)
-    # Yahan baad me AI model add kar sakte ho
     return jsonify({
         "ai_generated_probability": 65.4,
         "result": "Possibly AI Generated"
