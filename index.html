@@ -1,55 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>AI Image Detector</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-    }
-    .container {
-      max-width: 420px;
-      margin: 40px auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      text-align: center;
-    }
-    .drop-zone {
-      border: 2px dashed #999;
-      padding: 30px;
-      cursor: pointer;
-      margin-bottom: 15px;
-    }
-    .drop-zone.dragover {
-      border-color: #007bff;
-      background: #eef5ff;
-    }
-    button {
-      padding: 10px 20px;
-      cursor: pointer;
-    }
-    .progress {
-      width: 100%;
-      background: #ddd;
-      height: 10px;
-      margin-top: 10px;
-      display: none;
-    }
-    .progress-bar {
-      height: 10px;
-      width: 0%;
-      background: #007bff;
-    }
-    .result {
-      margin-top: 15px;
-      font-weight: bold;
-      font-size: 18px;
-    }
-    .green { color: green; }
-    .red { color: red; }
-  </style>
+<meta charset="UTF-8">
+<title>AI Image Detector</title>
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg,#eef2ff,#f8fafc);
+}
+
+.container{
+  max-width: 450px;
+  margin: 50px auto;
+  background: #fff;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+h2{ margin-bottom: 15px; }
+
+.drop-zone{
+  border: 2px dashed #999;
+  padding: 35px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: 0.3s;
+}
+
+.drop-zone.dragover{
+  border-color: #2563eb;
+  background: #eef5ff;
+}
+
+button{
+  margin-top: 15px;
+  padding: 10px 22px;
+  background: #2563eb;
+  border: none;
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover{ background:#1e40af; }
+
+.progress{
+  width: 100%;
+  background: #e5e7eb;
+  height: 10px;
+  margin-top: 15px;
+  border-radius: 10px;
+  display: none;
+}
+
+.progress-bar{
+  height: 10px;
+  width: 0%;
+  background: #2563eb;
+  border-radius: 10px;
+  transition: 0.4s;
+}
+
+.result{
+  margin-top: 18px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.green{ color: green; }
+.red{ color: red; }
+</style>
 </head>
+
 <body>
 
 <div class="container">
@@ -95,42 +120,33 @@ dropZone.addEventListener("drop", e => {
   selectedFile = e.dataTransfer.files[0];
 });
 
-function checkImage() {
-  if (!selectedFile) {
+function checkImage(){
+  if(!selectedFile){
     alert("Please upload an image");
     return;
   }
 
-  document.getElementById("progressBox").style.display = "block";
-  document.getElementById("progressBar").style.width = "30%";
-
   const formData = new FormData();
-  formData.append("media", selectedFile);
-  formData.append("models", "genai");
-  formData.append("api_user", "631942584");
-  formData.append("api_secret", "bt58E8Gi2xUfJjK7kucbTJXpoQxfK7Ed");
+  formData.append("image", selectedFile);
 
-  fetch("https://api.sightengine.com/1.0/check.json", {
+  document.getElementById("progressBox").style.display = "block";
+  document.getElementById("progressBar").style.width = "40%";
+  document.getElementById("result").innerText = "";
+
+  fetch("/check", {
     method: "POST",
     body: formData
   })
-  .then(res => {
-    document.getElementById("progressBar").style.width = "70%";
-    return res.json();
-  })
+  .then(res => res.json())
   .then(data => {
     document.getElementById("progressBar").style.width = "100%";
-
-    const prob = data.genai.probability * 100;
     const resultBox = document.getElementById("result");
 
-    if (prob >= 70) {
-      resultBox.className = "result red";
-      resultBox.innerText = `AI Generated (${prob.toFixed(2)}%)`;
-    } else {
-      resultBox.className = "result green";
-      resultBox.innerText = `Likely Real Image (${prob.toFixed(2)}%)`;
-    }
+    resultBox.className = "result " + 
+      (data.result.includes("AI") ? "red" : "green");
+
+    resultBox.innerText =
+      `${data.result} (${data.ai_generated_probability}%)`;
   })
   .catch(() => {
     document.getElementById("result").innerText = "Error checking image";
