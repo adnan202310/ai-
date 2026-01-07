@@ -1,1 +1,142 @@
-html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Image Detector</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+    }
+    .container {
+      max-width: 420px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .drop-zone {
+      border: 2px dashed #999;
+      padding: 30px;
+      cursor: pointer;
+      margin-bottom: 15px;
+    }
+    .drop-zone.dragover {
+      border-color: #007bff;
+      background: #eef5ff;
+    }
+    button {
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    .progress {
+      width: 100%;
+      background: #ddd;
+      height: 10px;
+      margin-top: 10px;
+      display: none;
+    }
+    .progress-bar {
+      height: 10px;
+      width: 0%;
+      background: #007bff;
+    }
+    .result {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .green { color: green; }
+    .red { color: red; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>AI Image Detector</h2>
+
+  <div class="drop-zone" id="dropZone">
+    Drag & Drop Image Here<br>or Click to Select
+    <input type="file" id="fileInput" accept="image/*" hidden>
+  </div>
+
+  <button onclick="checkImage()">Check Image</button>
+
+  <div class="progress" id="progressBox">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("fileInput");
+let selectedFile = null;
+
+dropZone.onclick = () => fileInput.click();
+
+fileInput.onchange = () => {
+  selectedFile = fileInput.files[0];
+};
+
+dropZone.addEventListener("dragover", e => {
+  e.preventDefault();
+  dropZone.classList.add("dragover");
+});
+
+dropZone.addEventListener("dragleave", () => {
+  dropZone.classList.remove("dragover");
+});
+
+dropZone.addEventListener("drop", e => {
+  e.preventDefault();
+  dropZone.classList.remove("dragover");
+  selectedFile = e.dataTransfer.files[0];
+});
+
+function checkImage() {
+  if (!selectedFile) {
+    alert("Please upload an image");
+    return;
+  }
+
+  document.getElementById("progressBox").style.display = "block";
+  document.getElementById("progressBar").style.width = "30%";
+
+  const formData = new FormData();
+  formData.append("media", selectedFile);
+  formData.append("models", "genai");
+  formData.append("api_user", "YOUR_API_USER");
+  formData.append("api_secret", "YOUR_API_SECRET");
+
+  fetch("https://api.sightengine.com/1.0/check.json", {
+    method: "POST",
+    body: formData
+  })
+  .then(res => {
+    document.getElementById("progressBar").style.width = "70%";
+    return res.json();
+  })
+  .then(data => {
+    document.getElementById("progressBar").style.width = "100%";
+
+    const prob = data.genai.probability * 100;
+    const resultBox = document.getElementById("result");
+
+    if (prob >= 70) {
+      resultBox.className = "result red";
+      resultBox.innerText = `AI Generated (${prob.toFixed(2)}%)`;
+    } else {
+      resultBox.className = "result green";
+      resultBox.innerText = `Likely Real Image (${prob.toFixed(2)}%)`;
+    }
+  })
+  .catch(() => {
+    document.getElementById("result").innerText = "Error checking image";
+  });
+}
+</script>
+
+</body>
+</html>
